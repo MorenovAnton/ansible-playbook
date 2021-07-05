@@ -1,0 +1,22 @@
+ansible 1 -m apt -a "update_cache=yes cache_valid_time=3600" 
+ansible 1 -m apt -a "install_recommends=yes name=apt-transport-https"
+ansible 1 -m apt -a "install_recommends=yes name=software-properties-common"
+ansible 1 -m apt -a "install_recommends=yes name=ca-certificates, update_cache=yes cache_valid_time=3600"
+ansible 1 -m apt -a "install_recommends=yes name=curl, update_cache=yes cache_valid_time=3600"
+ansible 1 -m apt_key -a "url=https://download.docker.com/linux/ubuntu/gpg state=present"
+ansible 1 -m apt_repository -a "repo='deb https://download.docker.com/linux/ubuntu focal stable' state=present"
+ansible 1 -m apt -a "update_cache=yes cache_valid_time=3600"
+ansible 1 -m apt -a "install_recommends=yes name=docker-ce"
+ansible 1 -m user -a "name=zabbix groups=docker append=yes"
+ansible 1 -m get_url -a "url='https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)' dest=/usr/local/bin/docker-compose"
+ansible 1 -m file -a "path=/usr/local/bin/docker-compose mode=u+x"  
+
+
+
+
+
+
+
+
+
+
