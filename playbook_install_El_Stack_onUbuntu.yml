@@ -1,0 +1,90 @@
+---
+- name : Install Elastic Stack on Ubuntu
+  hosts: VMtwo
+  become: yes
+
+  tasks:
+
+  - name: install Java
+    apt:
+      pkg:
+      - default-jre
+      - default-jdk
+        
+  - name: importing the Elasticsearch public key
+    apt_key:
+      url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      state: present
+  
+  - name: add Elastic sources list
+    apt_repository:
+      repo: deb https://artifacts.elastic.co/packages/6.x/apt stable main
+      state: present
+
+  - name: Update OS update_cache
+    apt:
+      update_cache: yes
+
+  - name: Install Elasticsearch 
+    apt: 
+      name: elasticsearch
+  - name: add elasticsearch service to autostart
+    service:
+      name: elasticsearch
+      state: started
+      enabled: yes 
+
+  - name: Install Kibana
+    apt:
+      name: kibana
+  - name: add kibane service to autostart
+    service:
+      name: kibana
+      state: started
+      enabled: yes
+      
+ #- name: do permit traffic in zone on port 5601/tcp
+    #firewalld:
+      #port: 5601/tcp
+      #permanent: yes
+      #state: enabled  
+
+  - name: Install Logstash
+    apt:
+      name: logstash
+  - name: add logstash service to autostart
+    service:
+      name: logstash
+      state: started
+      enabled: yes
+
+  - name: Install Beats
+    apt:
+      pkg:
+      - filebeat
+      - auditbeat 
+      - metricbeat 
+      - packetbeat 
+      - heartbeat-elastic
+    
+  - name: add filebest service to autostart
+    service:
+      name: filebeat
+      state: started
+      enabled: yes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
