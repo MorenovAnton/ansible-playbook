@@ -1,0 +1,142 @@
+# https://ubuntos.ru/ustanovite-i-nastroyte-wildfly-jboss-na-ubuntu
+# Установите и настройте Wildfly (JBoss) в Ubuntu
+---
+- name : Install Wildfly 
+  hosts: VMtwo
+  become: yes # установите значение «да», чтобы активировать повышение привилегий.
+
+  tasks:
+  # https://itisgood.ru/2020/02/14/kak-s-pomoshhju-ansible-obnovit-vse-pakety-v-ubuntu-debian-linux/
+  - name: Update OS update_cache # sudo apt-get update
+    apt:
+      update_cache: yes # update_cache = yes – запустить эквивалентную команду обновления apt-get на всех серверах
+
+  - name: install Java # sudo apt-get install default-jdk
+    apt:
+      pkg:
+      - default-jre
+      - default-jdk
+  
+  - name: Create group wildfly # sudo groupadd -r wildfly
+    group:
+      name: wildfly 
+
+  - name: Create user and group for WildFly # sudo useradd -r -g wildfly -d /opt/wildfly -s /sbin/nologin wildfly
+    user:
+      name: wildfly 
+      shell: /sbin/nologin 
+      groups: wildfly 
+      home: /opt/wildfly
+  
+  - name: Download tar file Wildfly # wget https://download.jboss.org/wildfly/$Version_Number/wildfly-$Version_Number.tar.gz -P /tmp
+    get_url:
+      url: https://download.jboss.org/wildfly/24.0.0.Final/wildfly-24.0.0.Final.zip
+      dest: /tmp
+
+  - name: Install unzip /
+    apt: 
+      name: unzip
+
+  - name: Unarchive a tar wildfly file that is already on the remote machine
+    # sudo tar xf /tmp/wildfly-$Version_Number.tar.gz -C /opt/
+    unarchive:
+      src: /tmp/wildfly-24.0.0.Final.zip
+      dest: /opt
+      remote_src: yes # Установите значение «да», чтобы указать, что заархивированный файл уже находится в удаленной системе
+
+  - name: directories will be deleted /opt/wildfly 
+    file:
+      path: /opt/wildfly
+      state: absent
+
+  - name: Create a symbolic link # sudo ln -s /opt/wildfly-$Version_Number /opt/wildfly
+    file:
+      src: /opt/wildfly-24.0.0.Final 
+      dest: /opt/wildfly
+      state: link
+
+  - name: Recursively change ownership of a directory on wildfly #  sudo chown -RH wildfly: /opt/wildfly
+    file:
+      path: /opt/wildfly-24.0.0.Final
+      state: directory
+      recurse: yes # Рекурсивно установить указанные атрибуты файла для содержимого каталога.
+      owner: wildfly   # Имя пользователя, который должен владеть файлом / каталогом, как будет передано в chown.
+      group: wildfly
+
+  - name: Creates directory /etc/wildfly # sudo mkdir -p /etc/wildfly
+    file:
+      path: /etc/wildfly
+      state: directory
+
+  - name: Copy wildfly.conf file from package files to newly created directory 
+    # sudo cp /opt/wildfly/docs/contrib/scripts/systemd/wildfly.conf /etc/wildfly/
+    copy:
+      src: /opt/wildfly-24.0.0.Final/docs/contrib/scripts/systemd/wildfly.conf
+      dest: /etc/wildfly/wildfly.conf
+      remote_src: yes
+
+  - name: copy the launch.sh script from WildFly package to /opt/wildfly/bin 
+    # sudo cp /opt/wildfly/docs/contrib/scripts/systemd/launch.sh /opt/wildfly/bin/
+    copy:
+      src: /opt/wildfly-24.0.0.Final/docs/contrib/scripts/systemd/launch.sh
+      dest: /opt/wildfly-24.0.0.Final/bin/launch.sh
+      remote_src: yes 
+    
+  #- name: copy the launch.sh script from WildFly package to /opt/wildfly/bin
+  #  copy:
+  #    src: /opt/wildfly-24.0.0.Final/docs/contrib/scripts/systemd/launch.sh
+  #    dest: /opt/wildfly-24.0.0.Final/bin
+  
+  - name: modes to set the permissions launch.sh file # sudo sh -c 'chmod +x /opt/wildfly/bin/*.sh'
+    file:
+      path:  /opt/wildfly-24.0.0.Final/bin/launch.sh
+      mode: '0755'  
+
+  - name: copy the wildfly.service file from /etc/systemd/system/
+    # sudo cp /opt/wildfly/docs/contrib/scripts/systemd/wildfly.service /etc/systemd/system/
+    copy:
+      src: /opt/wildfly-24.0.0.Final/docs/contrib/scripts/systemd/wildfly.service 
+      dest: /etc/systemd/system/wildfly.service
+      remote_src: yes   
+
+  - name: sudo systemctl daemon-reload # sudo systemctl daemon-reload
+    systemd:
+      #state: reloaded 
+      daemon_reload: yes
+      
+
+  - name: sudo systemctl start wildfly # sudo systemctl start wildfly
+    service:
+      name: wildfly
+      state: started
+      enabled: yes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
