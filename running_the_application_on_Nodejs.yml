@@ -1,3 +1,4 @@
+# https://pocoz.gitbooks.io/ansible_for_dev_ops_russian/content/glava-4-ansible-playbooks/centos-nodejs-server-prilozhenii.html
 ---
 - name : running application on Node.js
   hosts: VM19
