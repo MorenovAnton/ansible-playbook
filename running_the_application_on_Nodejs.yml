@@ -1,4 +1,6 @@
 # https://pocoz.gitbooks.io/ansible_for_dev_ops_russian/content/glava-4-ansible-playbooks/centos-nodejs-server-prilozhenii.html
+# https://www.unixmen.com/install-remi-repository-rhel-centos-scientific-linux-76-x5-x-fedora-201918/
+# https://webhamster.ru/mytetrashare/index/mtb0/1574858250rqmwmqb1qx
 ---
 - name : running application on Node.js
   hosts: VM19
