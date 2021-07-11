@@ -1,0 +1,103 @@
+---
+- name : running application on Node.js
+  hosts: VM19
+  become: yes # установите значение «да», чтобы активировать повышение привилегий.
+  
+  vars:
+    creates: "/home/remi-release-7.rpm"
+    node_apps_location: "/home/myapp"
+
+  tasks:
+
+  - name: Upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+  
+  # Установить EPEL-репозиторий
+  - name: Install EPEL repo    
+    yum:
+      name: epel-release
+      state: present          # гарантирует, что нужный пакет установлен.
+  
+  # Установить Remi-репозиторий
+  - name: Loading_rpm_file                                     
+    command: "curl -k {{ item.href }} --output {{ creates }}"
+    with_items:
+      - href: "https://rpms.remirepo.net/enterprise/remi-release-7.rpm"
+
+  - name: Install rpm file
+    command: "rpm -Uvh --force {{ creates }} creates={{ item.repos }}"
+    with_items:
+      - repos: "/etc/yum.repos.d/remi.repo"
+ 
+  # GPG-ключ
+  - name: Import Remi GPG key                                  
+    rpm_key: 
+      key: https://rpms.remirepo.net/RPM-GPG-KEY-remi2021  
+      state: present
+      validate_certs: no # проверяем актуальный ли сертификат
+
+  - name: Install npm
+    yum: 
+      name: npm 
+      state: present 
+      enablerepo: epel
+
+  # Forever используется для запуска приложения node.js   
+  - name: Install Forever (to run our Node.js app)
+    npm: 
+      name: forever 
+      global: yes 
+      state: latest
+
+  - name: Install the nodejs
+    yum:
+      name: nodejs
+      state: present
+
+  # Убедитесь, что папка приложения Node.js существует.
+  - name: Ensure Node.js app folder exists                   
+    file: 
+      path: "{{ node_apps_location }}" 
+      state: directory
+
+  # Копируем файлы на сервер    
+  - name: Copy example Node.js app to server   
+    copy: 
+      src: "{{ item }}"
+      dest: "{{ node_apps_location }}"
+    loop:
+      - "app.js"  
+      - "package.json"
+ 
+  - firewalld:
+      zone: public
+      service: http
+      permanent: yes
+      state: enabled
+
+  # сообщаем NPM о необходимости анализа файла package.json и установки всех зависимостей.
+  - name: Install app dependencies defined in package.json.
+    npm: 
+      path: "{{ node_apps_location }}"
+
+  - name: Check list of running Node.js apps
+    command: forever list
+    register: forever_list
+    changed_when: false
+
+  - name: Start example Node.js app
+    command: "forever start --minUptime 1000 --spinSleepTime 1000 {{ node_apps_location }}/app.js"
+    register: for_start 
+    when: "forever_list.stdout.find('{{ node_apps_location }}/myapp/app.js') == -1"
+  
+  
+
+
+
+
+
+
+
+
